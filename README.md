@@ -9,7 +9,7 @@ Fix a step size h > 0 and values
 yielding the process Y_j=Y(t_j) which is a simple random walk with IID increments distributed as
 sqrt(h)*N(0,1).
 
-As such $Y_j$ is a Markov process. We say that the process $Y_j$ dies at time t_j if
+As such Y_j is a Markov process. We say that the process Y_j dies at time t_j if
 
    Y_k >= d_k, for k<j, but Y_j < d_j
    
