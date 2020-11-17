@@ -90,14 +90,14 @@ P\left(Y(t_{j+1})\geq d_{j+1}\sep Y(t_j)\geq d_j\right)=
 \frac{F_{C_j}(I_j)}{P(Y(t_j)\geq d_j)}
 \\\label{Hj1}&=
 \frac{F_{C_j}(I_j)}{F(-d_j/\sqrt{t_j})},
-\q\text{where}\\
+\q\text{where}\\\notag
 C_j&=Cov(Y(t_j),Y(t_{j+1}))=
 \begin{pmatrix}
 t_j & t_j\\
 t_j & t_{j+1}
 \end{pmatrix}
-\q\text{ and }
-I_j = [d_j,+\oo]\times[d_{j+1},+\oo].
+\q\text{ and }\\\notag
+I_j &= [d_j,+\oo]\times[d_{j+1},+\oo].
 \end{align}
 %
 This is implemented as \code{fcn\_H1} in file \code{R/BM.R}.
