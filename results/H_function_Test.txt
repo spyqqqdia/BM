@@ -1,0 +1,4 @@
+
+
+Checking if fcnH(j)=fcn_H1(j) for all j in 1:23
+No deviation between fcn_H and fcn_H1 detected.

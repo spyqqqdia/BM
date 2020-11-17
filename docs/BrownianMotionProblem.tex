@@ -1,0 +1,158 @@
+\section{Brownian Motion Paths Hitting Lower Barrier}
+
+Fix $h>0$. We will evaluate a standard Brownian motion $Y$ starting at zero at 
+times $t_j=jh$, $j=1,2,\dots$. Given a sequence of lower barrier values $d_j$ 
+we say that $Y$ \textit{dies at time} $t_j$ if $Y(t_j)<d_j$.
+
+Now we compute the probability that $Y(t)$ is still alive at time $t=t_j$. 
+This is the event
+$$
+E_j=\big[Y(t_k)\geq d_k,\ths\forall k\leq j\big]
+$$
+Set $p_j:=P[E_j]$. Observing that $E_{j+1}\subseteq E_j$ and using the Markov property we obtain the recursion
+%
+\begin{align*}
+p_{j+1} &= P(E_{j+1})=P(E_{j+1}\cap E_j)=P(E_j)P(E_{j+1}|E_j)\\&=
+p_jP\big[Y(t_{j+1})\geq d_{j+1}\sep E_j\big]\\&=
+p_jP\big[Y(t_{j+1})\geq d_{j+1}\sep Y(t_j)\geq d_j\big] = p_jH(j)
+\q\text{with}\\
+H(j) &:= P\big[Y(t_{j+1})\geq d_{j+1}\sep Y(t_j)\geq d_j\big]
+\end{align*}
+% 
+To compute $H(j)$ above, set $t=t_j$ and $h=t_{j+1}-t_j$ so that
+$t_{j+1}=t+h$ and we have
+%
+\begin{align*}
+H(j) &=
+P\big[Y(t+h)\geq d_{j+1}\sep Y(t)\geq d_j\big] \\&=
+P\big[Y(t+h)-Y(t)\geq d_{j+1}-Y(t)\sep Y(t)\geq d_j\big] 
+\\&=
+\frac{1}{P(Y(t)\geq d_j)}
+\int_{d_j}^\oo P\big[Y(t+h)-Y(t)\geq d_{j+1}-y\sep Y(t)=y\big]P_{Y(t)}(dy) 
+\\&=
+\frac{1}{P(Y(t)\geq d_j)}
+\int_{d_j}^\oo P\big[\sqrt hN(0,1)\geq d_{j+1}-y\big]P_{Y(t)}(dy) 
+\\&=
+\frac{1}{F(-d_j/\sqrt{t})}
+\int_{d_j}^\oo F\left(\frac{y-d_{j+1}}{\sqrt h}\right)P_{Y(t)}(dy)
+\end{align*}
+%
+where $F(x)=P(N(0,1)\leq x)$ and we have used that the increment $Y(t+h)-Y(t)$ 
+is independent of $Y(t)$ and distributed as $N(0,h)=\sqrt h N(0,1)$.
+This yields the recursion
+%
+\begin{align}
+\label{rec0}
+p_{j+1} &= p_j\times H(j)\q\text{where}\\\label{rec1}
+H(j) &= \frac{1}{F(-d_j/\sqrt{t_j})}
+\int_{d_j}^\oo F\left(\frac{y-d_{j+1}}{\sqrt h}\right)P_{Y(t_j)}(dy),
+\end{align}
+%
+with starting condition (note $t_1=h$)
+%
+\begin{equation}
+\label{rec2}
+p_1=P[Y(t_1)\geq d_1]=F(-d_1/\sqrt h).
+\end{equation}
+%
+$H(j)$ as in (\ref{rec1}) is implemented as \code{fcn\_H}, see file
+\code{R/BM.R}.
+
+Using the bivariate normal cumulative distribution function $F_C(I)$
+where $C$ is the covariance matrix of the distribution and $I$ a two dimensional 
+rectange, we can also compute the conditional probability $H(j)$ as
+
+\penalty-5000
+%
+\begin{align} 
+\notag 
+H(j) &=
+P\left(Y(t_{j+1})\geq d_{j+1}\sep Y(t_j)\geq d_j\right)=
+\frac{F_{C_j}(I_j)}{P(Y(t_j)\geq d_j)}
+\\\label{Hj1}&=
+\frac{F_{C_j}(I_j)}{F(-d_j/\sqrt{t_j})},
+\q\text{where}\\
+C_j&=Cov(Y(t_j),Y(t_{j+1}))=
+\begin{pmatrix}
+t_j & t_j\\
+t_j & t_{j+1}
+\end{pmatrix}
+\q\text{ and }
+I_j = [d_j,+\oo]\times[d_{j+1},+\oo].
+\end{align}
+%
+This is implemented as \code{fcn\_H1} in file \code{R/BM.R}.
+The R-package \code{mvtnorm} provides the required multinormal distribution
+function.
+
+We check that the functions \code{fcn\_H} and \code{fcn\_H1} yield the same 
+result, see \code{test\_H\_function} in file \code{R/Tests.R}.
+
+\medskip\noindent
+\textbf{The problem:}
+In the code (function \code{runSimulation} in file \code{R/BM.R})
+we run a simulation of Brownian paths and monitor the probability $q_j$ of 
+death at time $t_j$ (by counting death events). For $j>1$ death at time $t_j$
+is the event $E_{j-1}\setminus E_j$ and since $E_j\subseteq E_{j-1}$ it follows
+that
+%
+\begin{equation}
+\label{qj}
+q_j=P(E_{j-1}\setminus E_j) = p_{j-1}-p_j
+\end{equation}
+%
+with $p_0=P(E_0)=1$ (being alive at the start of the simulation).
+We observe a drastic difference between theoretical and realized death
+probabilities.
+
+\subsection{Simulation}
+
+We will simulate paths $Y_j=Y(t_j)$ starting from $Y_0=0$ and keep count how
+many of these paths die at each time step $t_j$. This gives us an empirical 
+probability $q^e_j$ of death at time $t_j$ which we will compare with the theoretical value $q_j$ above.
+
+There will be a deviation due to sample variation and we will report a p-value
+associated with this deviation. To do this we write the empirical probability
+$q^e_j$ as the sample mean
+%
+\begin{equation}
+\label{qej}
+q^e_j=(X_1+X_2+\dots+X_n)/n
+\end{equation}
+%
+where $X_k$ is the indicator variable defined as
+$$
+X_k=
+\begin{cases}
+1\q&\text{if }Y(t)\text{dies at time $t=t_j$ in path $k$}\\
+0 &\text{else}
+\end{cases}
+$$
+Then the $X_k=0,1$ are IID with $P(X_k=1)=q_j$ from which it follows that
+$E[X_k]=q_j$ and $Var(X_k)=q_j(1-q_j)$. By the central Limit Theorem the sample
+mean $q^e_j$ in (\ref{qej}) is approximately normally distributed with mean
+$E[q^e_j]=q_j$ and variance 
+$$
+Var(q^e_j)=q_j(1-q_j)/n
+$$ 
+and because the sample 
+size $n$ in our simulation is extremely large (e.g. 4 million) this 
+approximation is highly accurate.
+
+Setting $\sigma_j:=\sqrt{Var(q^e_j)}$ the variable $(q^e_j-q_j)/\sigma_j$ is
+approximately standard normal leading to a very accurate two sided 
+p-value for a deviation $\delta$ of $q^e_j$ from the theoretical value $q_j$
+as
+%
+\begin{align}
+\notag
+pValue(\delta)&:=
+P\left(|q^e_j-q_j|\geq\delta\right)\\\notag&=
+P\left(|q^e_j-q_j|/\sigma_j\geq\delta/\sigma_j\right)\\\label{pValue}&=
+2*P\left(N(0,1)\leq-\delta/\sigma_j\right)=
+2*F\left(-\frac{\delta\sqrt n}{\sqrt{q_j(1-q_j}}\right).
+\end{align}
+%
+In our simulation this is extremely close to zero for $j\geq 4$ from which it 
+follows that there is something wrong with our theory or simulation code. 
+But what is it?
