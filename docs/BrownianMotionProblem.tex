@@ -1,7 +1,11 @@
 \section{Brownian Motion Paths Hitting Lower Barrier}
 
 Fix $h>0$. We will evaluate a standard Brownian motion $Y$ starting at zero at 
-times $t_j=jh$, $j=1,2,\dots$. Given a sequence of lower barrier values $d_j$ 
+times $t_j=jh$, $j=1,2,\dots$. This yields the discrete time process $Y_j=Y(t_j)$ 
+which is a simple random walk with IID increments distributed as $\sqrt{h}N(0,1)$.
+This is a very simple Markov process.
+
+Given a sequence of lower barrier values $d_j$ 
 we say that $Y$ \textit{dies at time} $t_j$ if $Y(t_j)<d_j$.
 
 Now we compute the probability that $Y(t)$ is still alive at time $t=t_j$. 
@@ -9,7 +13,8 @@ This is the event
 $$
 E_j=\big[Y(t_k)\geq d_k,\ths\forall k\leq j\big]
 $$
-Set $p_j:=P[E_j]$. Observing that $E_{j+1}\subseteq E_j$ and using the Markov property we obtain the recursion
+Set $p_j:=P[E_j]$. Observing that $E_{j+1}\subseteq E_j$ and using the Markov property 
+we obtain the recursion
 %
 \begin{align*}
 p_{j+1} &= P(E_{j+1})=P(E_{j+1}\cap E_j)=P(E_j)P(E_{j+1}|E_j)\\&=
@@ -19,6 +24,20 @@ p_jP\big[Y(t_{j+1})\geq d_{j+1}\sep Y(t_j)\geq d_j\big] = p_jH(j)
 H(j) &:= P\big[Y(t_{j+1})\geq d_{j+1}\sep Y(t_j)\geq d_j\big]
 \end{align*}
 % 
+Here we have used the Markov property in the following way:
+%
+\begin{equation}
+\label{markov}
+P\big(Y_{j+1}\geq d_{j+1}\ths\big|\ths Y_k\geq d_k, k=j,j-1,\dots,1\big) =
+P\big(Y_{j+1}\geq d_{j+1}\ths\big|\ths Y_j\geq d_j\big).
+\end{equation}
+%
+Sloppy formulations of the Markov property suggest as much but the Markov property 
+\textit{does not imply this} and in fact in our case it is \textit{\textcolor{red}{not true}}.
+This will then yield incorrect survival probabilities $p_j$ and we will verify by simulation
+that the $p_j$ so computed deviate substantially from realized survival probabilities in the 
+simulation.
+
 To compute $H(j)$ above, set $t=t_j$ and $h=t_{j+1}-t_j$ so that
 $t_{j+1}=t+h$ and we have
 %
@@ -88,11 +107,11 @@ function.
 We check that the functions \code{fcn\_H} and \code{fcn\_H1} yield the same 
 result, see \code{test\_H\_function} in file \code{R/Tests.R}.
 
-\medskip\noindent
-\textbf{The problem:}
 In the code (function \code{runSimulation} in file \code{R/BM.R})
 we run a simulation of Brownian paths and monitor the probability $q_j$ of 
-death at time $t_j$ (by counting death events). For $j>1$ death at time $t_j$
+death at time $t_j$ (by counting death events which are much rarer). 
+
+For $j>1$ death at time $t_j$
 is the event $E_{j-1}\setminus E_j$ and since $E_j\subseteq E_{j-1}$ it follows
 that
 %
@@ -103,7 +122,9 @@ q_j=P(E_{j-1}\setminus E_j) = p_{j-1}-p_j
 %
 with $p_0=P(E_0)=1$ (being alive at the start of the simulation).
 We observe a drastic difference between theoretical and realized death
-probabilities.
+probabilities showing clearly that (\ref{markov}) fails.
+
+We will compute the true survival probabilities $p_j$ later.
 
 \subsection{Simulation}
 
@@ -154,5 +175,30 @@ P\left(|q^e_j-q_j|/\sigma_j\geq\delta/\sigma_j\right)\\\label{pValue}&=
 \end{align}
 %
 In our simulation this is extremely close to zero for $j\geq 4$ from which it 
-follows that there is something wrong with our theory or simulation code. 
-But what is it?
+follows that the $p_j$ as computed in (\ref{rec0}), (\ref{rec1}) above are incorrect.
+This verifies that (\ref{markov}) fails.
+
+\subsection{Correct survival probabilities}
+
+The probability $p_j$ of survival to time $t_j$ can be obtained directly from the multivariate
+normal distribution function $F_C(I)$ where $C$ is the covariance matrix of the distribution and
+$I$ a rectangle in $\bbR^j$. Indeed
+%
+\begin{align}
+\label{pj}
+p_j&=P\big(Y_j\geq d_j,Y_{j-1}\geq d_{j-1},\dots,Y_1\geq d_1)=F_{C_j}(I_j),\q\text{where}
+\\\notag
+I_j&=[d_1,+\oo)\times[d_2,+\oo)\times\dots\times[d_j,+\oo)
+\end{align}
+%
+and $C_j$ is the covariance matrix
+%
+\begin{equation}
+\label{Cj}
+C_j=Cov(Y_1,Y_2,\dots,Y_j)=(t_i\wedge t_k)_{i,k=1}^j.
+\end{equation}
+%
+The multivariate distribution function $F_C(I)$ is implemented in the R-package \textit{mvtnorm}
+and we will use this to compute the true survival probabilities $p_j$ from (\ref{pj}).
+
+
